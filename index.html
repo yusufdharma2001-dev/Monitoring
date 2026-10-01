@@ -1,681 +1,1678 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
+    <!-- STREAMING_CHUNK: Setting up HTML head, metas, and external resources -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Monitoring - Yusuf Dharma</title>
+    <title>Dashboard Monitoring Collector - Yusuf Dharma Mu'minin</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfeff',
+                            100: '#cffaff',
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            900: '#164e63',
+                        },
+                        dark: {
+                            bg: '#0b0f19',
+                            card: '#111827',
+                            border: '#1f293d',
+                            accent: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-    <!-- SheetJS (XLSX Parser) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
+    <!-- SheetJS (xlsx) for Excel upload/parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- HTML Canvas Confetti (Optional polish) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
-        :root {
-            --bg-main: #020617; /* Slate 950 */
-            --bg-card: rgba(15, 23, 42, 0.6);
-            --accent-primary: #3b82f6; /* Blue 500 */
-            --accent-secondary: #8b5cf6; /* Violet 500 */
-        }
-        
         body {
-            background-color: var(--bg-main);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
-            color: #f8fafc;
             font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            background-attachment: fixed;
+            background-color: #080c14;
+            color: #f3f4f6;
         }
         
-        /* Glassmorphism */
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
         .glass-panel {
-            background: var(--bg-card);
+            background: rgba(17, 24, 39, 0.75);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 4px;}
-        ::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(71, 85, 105, 1); }
-
-        /* Animations */
-        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .glass-panel-glow {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.15);
         }
 
-        /* Main Tabs */
-        .main-tab { transition: all 0.3s ease; }
-        .main-tab.active {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-            border-bottom: 2px solid #60a5fa;
-            color: white;
+        .tab-active {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+            border-color: rgba(6, 182, 212, 0.5);
+            color: #22d3ee;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
         }
 
-        /* Collector Tabs */
-        .coll-tab { transition: all 0.2s ease; }
-        .coll-tab.active {
-            background-color: #3b82f6;
-            color: white;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-            border-color: #3b82f6;
+        .subtab-active {
+            background-color: #06b6d4;
+            color: #080c14;
+            font-weight: 700;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .glass-panel {
+                border: 1px solid #ccc !important;
+                background: white !important;
+                color: black !important;
+            }
         }
     </style>
 </head>
-<body class="p-4 md:p-6 lg:p-8 antialiased">
+<body class="min-h-screen flex flex-col antialiased">
 
-    <div class="max-w-[1600px] mx-auto space-y-6">
-
-        <!-- HEADER -->
-        <header class="glass-panel p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                    <i class="fa-solid fa-chart-pie text-2xl"></i>
+    <!-- STREAMING_CHUNK: Building Header Section with Greeting & Excel Upload -->
+    <header class="no-print sticky top-0 z-50 glass-panel border-b border-slate-800/80 px-4 lg:px-8 py-3.5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3 w-full md:w-auto justify-between">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-bold shadow-lg shadow-cyan-500/20">
+                    <i data-lucide="shield-check" class="w-6 h-6 text-slate-950"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-400">
+                    <h1 class="text-lg lg:text-xl font-extrabold bg-gradient-to-r from-cyan-400 via-sky-200 to-indigo-300 bg-clip-text text-transparent">
                         Selamat Datang, Yusuf Dharma Mu'minin
                     </h1>
-                    <p class="text-sm text-slate-400 mt-1 font-medium">Dashboard Pengelola Monitoring Performa & Portofolio</p>
+                    <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Pengelola Monitoring Dashboard Web Performance & Recovery
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Mobile Menu Toggle Button (Optional View) -->
+            <button id="resetDataBtn" title="Reset Data Default" class="md:hidden text-slate-400 hover:text-white p-2">
+                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Action Controls & Excel Upload -->
+        <div class="flex items-center gap-2.5 w-full md:w-auto justify-end overflow-x-auto pb-1 md:pb-0">
+            <!-- File Input (Hidden) -->
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)">
+            
+            <!-- Upload Excel Button -->
+            <button onclick="document.getElementById('excelFileInput').click()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-semibold text-xs transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20 active:scale-95 whitespace-nowrap">
+                <i data-lucide="file-up" class="w-4 h-4"></i>
+                <span>Update Data Excel (.xlsx)</span>
+            </button>
+
+            <!-- Reset to Default Data -->
+            <button onclick="resetToDefaultData()" class="px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1.5 border border-slate-700/60 whitespace-nowrap" title="Kembalikan ke data awal Workbook2.xlsx">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span class="hidden sm:inline">Reset Default</span>
+            </button>
+
+            <!-- Export / Print PDF -->
+            <button onclick="window.print()" class="px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all flex items-center gap-1.5 border border-slate-700/60 whitespace-nowrap">
+                <i data-lucide="printer" class="w-3.5 h-3.5 text-indigo-400"></i>
+                <span class="hidden sm:inline">Cetak PDF</span>
+            </button>
+
+            <div class="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+
+            <!-- Date Display Badge -->
+            <div class="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span id="currentDateStr">2026</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- STREAMING_CHUNK: Main Container & Primary Navigation Tabs -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8 space-y-6">
+        
+        <!-- Primary Sheet Tabs Navigation -->
+        <nav class="no-print flex items-center gap-2 p-1.5 rounded-2xl glass-panel border border-slate-800 overflow-x-auto">
+            <button onclick="switchMainTab('tab1')" id="mainTab-tab1" class="tab-btn flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-transparent text-slate-400 hover:text-white">
+                <i data-lucide="award" class="w-4 h-4"></i>
+                <span>Sheet 1: INSENTIF</span>
+            </button>
+            <button onclick="switchMainTab('tab2')" id="mainTab-tab2" class="tab-btn flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-transparent text-slate-400 hover:text-white">
+                <i data-lucide="users" class="w-4 h-4"></i>
+                <span>Sheet 2: BA NOOD</span>
+            </button>
+            <button onclick="switchMainTab('tab3')" id="mainTab-tab3" class="tab-btn flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-transparent text-slate-400 hover:text-white">
+                <i data-lucide="clock" class="w-4 h-4"></i>
+                <span>Sheet 3: BA 1_30</span>
+            </button>
+            <button onclick="switchMainTab('tab4')" id="mainTab-tab4" class="tab-btn flex-1 min-w-[160px] py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 border border-transparent text-slate-400 hover:text-white">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                <span>Sheet 4: BA 31_60</span>
+            </button>
+        </nav>
+
+        <!-- STREAMING_CHUNK: TAB 1 Content - Collector Incentive Performance -->
+        <section id="tabContent-tab1" class="tab-content space-y-6">
+            
+            <!-- Sub-Tabs for Collectors in Sheet 1 -->
+            <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3 border border-slate-800">
+                <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0" id="collectorSubTabsContainer">
+                    <!-- Subtabs dynamically rendered in JS -->
+                </div>
+
+                <div class="text-xs text-slate-400 px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5 self-end md:self-auto">
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span>Klik tab nama untuk melihat detail individu /Overview Tim</span>
                 </div>
             </div>
 
-            <!-- Upload Area -->
-            <div class="flex flex-col items-end">
-                <label class="cursor-pointer group relative">
-                    <div class="bg-slate-800/80 hover:bg-slate-700 border border-slate-700 group-hover:border-blue-500/50 px-5 py-2.5 rounded-xl flex items-center gap-3 transition-all shadow-lg">
-                        <i class="fa-solid fa-file-excel text-emerald-400 text-xl"></i>
-                        <div class="text-left">
-                            <div class="text-sm font-bold text-slate-200 group-hover:text-white">Upload Update Excel</div>
-                            <div class="text-[10px] text-slate-400">Format: Workbook2_2.xlsx</div>
+            <!-- Collector Detail Container (Rendered dynamically based on active subtab) -->
+            <div id="collectorDetailView">
+                <!-- Javascript will insert performance cards, charts, and table here -->
+            </div>
+        </section>
+
+        <!-- STREAMING_CHUNK: TAB 2 Content - BA NOOD Consumers -->
+        <section id="tabContent-tab2" class="tab-content hidden space-y-6">
+            <!-- Header Summary & Interactive Filters -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total Account NOOD</p>
+                        <h3 id="noodTotalContracts" class="text-2xl font-bold text-cyan-400 mt-1">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Kontrak Aktif Ditangani</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-cyan-500/10 text-cyan-400">
+                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total Sisa Pokok (SIPOK)</p>
+                        <h3 id="noodTotalSipok" class="text-xl font-bold text-emerald-400 mt-1">Rp 0</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Nilai Portofolio NOOD</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                        <i data-lucide="wallet" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Distribusi Tipe Barang</p>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <span class="text-xs px-2 py-1 rounded bg-sky-500/10 text-sky-400 font-semibold border border-sky-500/20" id="noodMotorCount">Motor: 0</span>
+                            <span class="text-xs px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20" id="noodMobilCount">Mobil: 0</span>
                         </div>
                     </div>
-                    <input type="file" id="excel-upload" accept=".xlsx, .xls" class="hidden">
-                </label>
-                <div id="upload-status" class="text-xs text-emerald-400 mt-2 hidden flex items-center gap-1">
-                    <i class="fa-solid fa-check-circle"></i> Data berhasil diperbarui
+                    <div class="p-3 rounded-xl bg-indigo-500/10 text-indigo-400">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-col justify-center gap-2">
+                    <p class="text-xs text-slate-400 font-medium">Filter Data Interaktif</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="noodFilterCollector" onchange="filterNoodData()" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                            <option value="ALL">Semua Collector</option>
+                        </select>
+                        <select id="noodFilterItem" onchange="filterNoodData()" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                            <option value="ALL font-normal">Semua Barang</option>
+                            <option value="MOTOR">MOTOR</option>
+                            <option value="MOBIL">MOBIL</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-        </header>
 
-        <!-- MAIN TABS (Sheet Navigation) -->
-        <div class="flex items-center gap-2 overflow-x-auto border-b border-slate-800 pb-px" id="main-tabs-container">
-            <!-- Tabs will be generated here dynamically -->
-        </div>
+            <!-- Visualization & Data Table Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Donut Chart: Collector Workload Distribution -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-cyan-400"></i>
+                            Beban Penanganan Akun (Collector)
+                        </h4>
+                        <span class="text-[11px] text-slate-400">Sheet BA NOOD</span>
+                    </div>
+                    <div class="flex-1 flex items-center justify-center min-h-[240px] relative">
+                        <canvas id="noodDonutChart"></canvas>
+                    </div>
+                    <p class="text-[11px] text-slate-400 text-center mt-3 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+                        Grafik ini mempermudah identifikasi kolektor yang masih memegang porsi penanganan terbanyak.
+                    </p>
+                </div>
 
-        <!-- MAIN CONTENT AREA -->
-        <div id="dashboard-content" class="min-h-[600px]">
-            <!-- Dynamic content injected here -->
-        </div>
+                <!-- Account List Data Table -->
+                <div class="lg:col-span-2 glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col space-y-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-200">Daftar Konsumen BA NOOD</h4>
+                            <p class="text-xs text-slate-400">Penanganan akun oleh masing-masing collector</p>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            <input type="text" id="noodSearchInput" onkeyup="filterNoodData()" placeholder="Cari Konsumen / Kontrak..." class="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl pl-9 pr-3 py-2 focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                        </div>
+                    </div>
 
-    </div>
+                    <div class="overflow-x-auto rounded-xl border border-slate-800/80">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3">No</th>
+                                    <th class="p-3">Nama Collector</th>
+                                    <th class="p-3">Nama Konsumen</th>
+                                    <th class="p-3">No. Kontrak</th>
+                                    <th class="p-3">Tipe Barang</th>
+                                    <th class="p-3 text-right">SIPOK</th>
+                                </tr>
+                            </thead>
+                            <tbody id="noodTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
 
+        <!-- STREAMING_CHUNK: TAB 3 Content - BA 1_30 Consumers -->
+        <section id="tabContent-tab3" class="tab-content hidden space-y-6">
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total Akun 1_30</p>
+                        <h3 id="ba130TotalContracts" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Keterlambatan 1 - 30 Hari</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-amber-500/10 text-amber-400">
+                        <i data-lucide="clock" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total Sipok 1_30</p>
+                        <h3 id="ba130TotalSipok" class="text-xl font-bold text-emerald-400 mt-1">Rp 0</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Sisa Pokok Piutang</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                        <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Distribusi Barang</p>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <span class="text-xs px-2 py-1 rounded bg-sky-500/10 text-sky-400 font-semibold border border-sky-500/20" id="ba130MotorCount">Motor: 0</span>
+                            <span class="text-xs px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20" id="ba130MobilCount">Mobil: 0</span>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-indigo-500/10 text-indigo-400">
+                        <i data-lucide="package" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-col justify-center gap-2">
+                    <p class="text-xs text-slate-400 font-medium">Filter BA 1_30</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="ba130FilterCollector" onchange="filterBa130Data()" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <option value="ALL">Semua Collector</option>
+                        </select>
+                        <select id="ba130FilterItem" onchange="filterBa130Data()" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <option value="ALL">Semua Barang</option>
+                            <option value="MOTOR">MOTOR</option>
+                            <option value="MOBIL">MOBIL</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization & Table Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Donut Chart -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-amber-400"></i>
+                            Proporsi Akun BA 1_30
+                        </h4>
+                        <span class="text-[11px] text-slate-400">Sheet BA 1_30</span>
+                    </div>
+                    <div class="flex-1 flex items-center justify-center min-h-[240px] relative">
+                        <canvas id="ba130DonutChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="lg:col-span-2 glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col space-y-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-200">Daftar Konsumen BA 1_30</h4>
+                            <p class="text-xs text-slate-400">Kolektor penanggung jawab akun 1 - 30 hari</p>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            <input type="text" id="ba130SearchInput" onkeyup="filterBa130Data()" placeholder="Cari Konsumen / Kontrak..." class="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl pl-9 pr-3 py-2 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-800/80">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3">No</th>
+                                    <th class="p-3">Nama Collector</th>
+                                    <th class="p-3">Nama Konsumen</th>
+                                    <th class="p-3">No. Kontrak</th>
+                                    <th class="p-3">Tipe Barang</th>
+                                    <th class="p-3 text-right">SIPOK</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ba130TableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STREAMING_CHUNK: TAB 4 Content - BA 31_60 Consumers -->
+        <section id="tabContent-tab4" class="tab-content hidden space-y-6">
+            <!-- Summary Header -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total Akun 31_60</p>
+                        <h3 id="ba3160TotalContracts" class="text-2xl font-bold text-rose-400 mt-1">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Bucket Penanganan Kritis</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-rose-500/10 text-rose-400">
+                        <i data-lucide="alert-octagon" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total Sipok 31_60</p>
+                        <h3 id="ba3160TotalSipok" class="text-xl font-bold text-emerald-400 mt-1">Rp 0</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Total Nilai Penanganan</p>
+                    </div>
+                    <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                        <i data-lucide="coins" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Breakdown Tipe Barang</p>
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <span class="text-xs px-2 py-1 rounded bg-sky-500/10 text-sky-400 font-semibold border border-sky-500/20" id="ba3160MotorCount">Motor: 0</span>
+                            <span class="text-xs px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20" id="ba3160MobilCount">Mobil: 0</span>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-indigo-500/10 text-indigo-400">
+                        <i data-lucide="truck" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-col justify-center gap-2">
+                    <p class="text-xs text-slate-400 font-medium">Filter BA 31_60</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="ba3160FilterCollector" onchange="filterBa3160Data()" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                            <option value="ALL">Semua Collector</option>
+                        </select>
+                        <select id="ba3160FilterItem" onchange="filterBa3160Data()" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                            <option value="ALL">Semua Barang</option>
+                            <option value="MOTOR">MOTOR</option>
+                            <option value="MOBIL">MOBIL</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualizations & Table -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Donut Chart -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-rose-400"></i>
+                            Proporsi Penanganan Akun
+                        </h4>
+                        <span class="text-[11px] text-slate-400">Sheet BA 31_60</span>
+                    </div>
+                    <div class="flex-1 flex items-center justify-center min-h-[240px] relative">
+                        <canvas id="ba3160DonutChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="lg:col-span-2 glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col space-y-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-200">Daftar Konsumen BA 31_60</h4>
+                            <p class="text-xs text-slate-400">Penanganan akun bucket 31_60 hari</p>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                            <input type="text" id="ba3160SearchInput" onkeyup="filterBa3160Data()" placeholder="Cari Konsumen / Kontrak..." class="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-xl pl-9 pr-3 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-800/80">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3">No</th>
+                                    <th class="p-3">Nama Collector</th>
+                                    <th class="p-3">Nama Konsumen</th>
+                                    <th class="p-3">No. Kontrak</th>
+                                    <th class="p-3">Tipe Barang</th>
+                                    <th class="p-3 text-right">SIPOK</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ba3160TableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="no-print mt-auto border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500 glass-panel">
+        <p>© 2026 Dashboard Monitoring Collector Web | Pengelola: <span class="text-cyan-400 font-semibold">Yusuf Dharma Mu'minin</span></p>
+    </footer>
+
+    <!-- STREAMING_CHUNK: JavaScript Data Core, State Management & Workbook Logic -->
     <script>
-        // Global State
-        let workbookData = {
-            sheets: [],       // Array of sheet names
-            data: {},         // Data per sheet
-            activeSheet: '',  // Currently selected sheet tab
-            performa: {
-                activeCollector: '' // Currently selected collector in Performa sheet
-            }
-        };
-
-        // Chart instances for memory management
-        let charts = {
-            performaKPI: null,
-            portfolioDonut: null
-        };
-
-        // Elements
-        const fileInput = document.getElementById('excel-upload');
-        const mainTabsContainer = document.getElementById('main-tabs-container');
-        const dashboardContent = document.getElementById('dashboard-content');
-        const uploadStatus = document.getElementById('upload-status');
-
-        const formatRupiah = (number) => {
-            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(number || 0);
-        };
-        const formatPercent = (number) => {
-            return ((number || 0) * 100).toFixed(1) + '%';
-        };
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                try {
-                    const data = new Uint8Array(evt.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    
-                    workbookData.sheets = workbook.SheetNames;
-                    workbookData.data = {};
-                    
-                    workbook.SheetNames.forEach(sheetName => {
-                        // Baca sebagai JSON header standar
-                        const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
-                        workbookData.data[sheetName] = sheetData;
-                    });
-
-                    if (workbookData.sheets.length > 0) {
-                        workbookData.activeSheet = workbookData.sheets[0];
-                        
-                        // Show success message
-                        uploadStatus.classList.remove('hidden');
-                        setTimeout(() => uploadStatus.classList.add('hidden'), 4000);
-                        
-                        buildMainTabs();
-                        renderActiveSheet();
-                    }
-                } catch (error) {
-                    console.error("Error parsing Excel:", error);
-                    alert("Gagal membaca file Excel. Pastikan format sesuai.");
+        // Default Excel dataset derived from Workbook2.xlsx
+        const DEFAULT_DATA = {
+            insentif: [
+                {
+                    collector: "Budi Satrio",
+                    nilai: 3.8,
+                    raport: "ON TARGET",
+                    keterangan: "DIBAYARKAN",
+                    flow: 4.92,
+                    balance: 1.45,
+                    flowEver: 78.95,
+                    c1Pct: 74.36, c1Ins: 500000,
+                    c2Pct: 72.61, c2Ins: 0,
+                    c3Pct: 72.61, c3Ins: 0,
+                    c4Pct: 71.34, c4Ins: 0,
+                    tbMobil: 0,
+                    tbMotor: 0,
+                    btcSr: 0,
+                    totalInsentif: 500000,
+                    absensi: 12,
+                    insentifRaport: 312000
+                },
+                {
+                    collector: "I Gede Adi Pratama Putra",
+                    nilai: 5.0,
+                    raport: "EXCEPTIONAL",
+                    keterangan: "DIBAYARKAN",
+                    flow: 0.81,
+                    balance: 8.04,
+                    flowEver: 42.86,
+                    c1Pct: 89.90, c1Ins: 0,
+                    c2Pct: 64.97, c2Ins: 0,
+                    c3Pct: 3.85, c3Ins: 500000,
+                    c4Pct: 3.44, c4Ins: 500000,
+                    tbMobil: 0,
+                    tbMotor: 0,
+                    btcSr: 0,
+                    totalInsentif: 1000000,
+                    absensi: 26,
+                    insentifRaport: 1040000
+                },
+                {
+                    collector: "Oktavianus Manik",
+                    nilai: 5.0,
+                    raport: "EXCEPTIONAL",
+                    keterangan: "DIBAYARKAN",
+                    flow: 1.12,
+                    balance: 4.51,
+                    flowEver: 11.11,
+                    c1Pct: 31.28, c1Ins: 750000,
+                    c2Pct: 5.35, c2Ins: 750000,
+                    c3Pct: 0.36, c3Ins: 500000,
+                    c4Pct: 0.00, c4Ins: 500000,
+                    tbMobil: 0,
+                    tbMotor: 0,
+                    btcSr: 0,
+                    totalInsentif: 2500000,
+                    absensi: 27,
+                    insentifRaport: 1080000
+                },
+                {
+                    collector: "Ridwan Andika",
+                    nilai: 4.0,
+                    raport: "EXCEED TARGET",
+                    keterangan: "DIBAYARKAN",
+                    flow: 2.98,
+                    balance: 7.15,
+                    flowEver: 55.56,
+                    c1Pct: 93.47, c1Ins: 0,
+                    c2Pct: 28.17, c2Ins: 750000,
+                    c3Pct: 23.99, c3Ins: 500000,
+                    c4Pct: 11.61, c4Ins: 0,
+                    tbMobil: 0,
+                    tbMotor: 0,
+                    btcSr: 0,
+                    totalInsentif: 1250000,
+                    absensi: 26,
+                    insentifRaport: 832000
+                },
+                {
+                    collector: "Risky Imam Hanafi",
+                    nilai: 4.7,
+                    raport: "EXCEPTIONAL",
+                    keterangan: "DIBAYARKAN",
+                    flow: 1.47,
+                    balance: 3.76,
+                    flowEver: 50.00,
+                    c1Pct: 87.44, c1Ins: 0,
+                    c2Pct: 4.37, c2Ins: 750000,
+                    c3Pct: 4.37, c3Ins: 500000,
+                    c4Pct: 0.00, c4Ins: 500000,
+                    tbMobil: 0,
+                    tbMotor: 0,
+                    btcSr: 0,
+                    totalInsentif: 1750000,
+                    absensi: 27,
+                    insentifRaport: 1080000
                 }
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        function buildMainTabs() {
-            mainTabsContainer.innerHTML = '';
-            workbookData.sheets.forEach(sheetName => {
-                const btn = document.createElement('button');
-                const isPerforma = sheetName.toLowerCase().includes('performa') || sheetName === workbookData.sheets[0];
-                const icon = isPerforma ? 'fa-user-tie' : 'fa-users';
+            ],
+            baNood: [
+                { collector: "I Gede Adi Pratama Putra", consumer: "PANDU SURYA KUSUMA", contract: "1060120240105457", item: "MOTOR", sipok: 4011963 },
+                { collector: "I Gede Adi Pratama Putra", consumer: "KAMAL JOKO SUROYO", contract: "1060120250306228", item: "MOTOR", sipok: 17933455 },
+                { collector: "I Gede Adi Pratama Putra", consumer: "SUYONO", contract: "1060120250906583", item: "MOTOR", sipok: 460509 },
+                { collector: "I Gede Adi Pratama Putra", consumer: "M DHOHRI SUPAROH", contract: "1060120251006658", item: "MOTOR", sipok: 5411362 },
+                { collector: "I Gede Adi Pratama Putra", consumer: "CHINDY KHARISMA", contract: "1060120251006679", item: "MOTOR", sipok: 16152638 },
                 
-                btn.className = `main-tab px-6 py-3 rounded-t-xl text-sm font-bold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center gap-2 whitespace-nowrap ${sheetName === workbookData.activeSheet ? 'active text-white' : ''}`;
-                btn.innerHTML = `<i class="fa-solid ${icon}"></i> ${sheetName}`;
-                btn.onclick = () => {
-                    workbookData.activeSheet = sheetName;
-                    buildMainTabs();
-                    renderActiveSheet();
-                };
-                mainTabsContainer.appendChild(btn);
-            });
+                { collector: "Oktavianus Manik", consumer: "PARJAN", contract: "1060120240705796", item: "MOTOR", sipok: 11965113 },
+                { collector: "Oktavianus Manik", consumer: "MOCH NUR HASAN", contract: "1060120250306233", item: "MOTOR", sipok: 14834166 },
+                { collector: "Oktavianus Manik", consumer: "MOH TAUFIQ", contract: "1060120250706488", item: "MOTOR", sipok: 8502773 },
+                { collector: "Oktavianus Manik", consumer: "ZAINUL ARIFIN", contract: "1060120250806509", item: "MOTOR", sipok: 1595291 },
+                { collector: "Oktavianus Manik", consumer: "ROKHMAN", contract: "1060120251006660", item: "MOTOR", sipok: 3061659 },
+                { collector: "Oktavianus Manik", consumer: "MUCHLISIN", contract: "1060120251106728", item: "MOTOR", sipok: 22234705 },
+                { collector: "Oktavianus Manik", consumer: "MUHAMMAD IQBAL AZIZI", contract: "1060120251106734", item: "MOTOR", sipok: 15958958 },
+                
+                { collector: "Ridwan Andika", consumer: "SEPTA FAJAR PERDANA", contract: "1060120240905898", item: "MOTOR", sipok: 11265394 },
+                { collector: "Ridwan Andika", consumer: "BAMBANG SUTEJO", contract: "1060120241006001", item: "MOTOR", sipok: 8767112 },
+                { collector: "Ridwan Andika", consumer: "DEBBY SUHERMAN", contract: "1060120250806522", item: "MOBIL", sipok: 102122866 },
+                { collector: "Ridwan Andika", consumer: "SUGIANTO", contract: "1060120251006655", item: "MOTOR", sipok: 8633261 },
+                { collector: "Ridwan Andika", consumer: "M IKSANUDIN", contract: "1060120251106727", item: "MOTOR", sipok: 17976515 },
+                { collector: "Ridwan Andika", consumer: "R AGUS SULISTYO WIDODO", contract: "1060120251106740", item: "MOTOR", sipok: 7497358 },
+
+                { collector: "Risky Imam Hanafi", consumer: "NUR CHAFID", contract: "1060120250406272", item: "MOTOR", sipok: 8241400 },
+                { collector: "Risky Imam Hanafi", consumer: "WACHID ROFIQ", contract: "1060120250706427", item: "MOTOR", sipok: 11811217 }
+            ],
+            ba130: [
+                { collector: "I Gede Adi Pratama Putra", consumer: "ASMAUL KUSNAH", contract: "1060120250906631", item: "MOTOR", sipok: 9320184 },
+                { collector: "I Gede Adi Pratama Putra", consumer: "SUGIATI", contract: "1060120260306944", item: "MOTOR", sipok: 6893700 },
+
+                { collector: "Ridwan Andika", consumer: "PRENGKY TEDDY PRIYATNO", contract: "1060120250706461", item: "MOTOR", sipok: 14648719 },
+                { collector: "Ridwan Andika", consumer: "HELENA SITI RAHAYU", contract: "1060120251006659", item: "MOTOR", sipok: 2946353 },
+                { collector: "Ridwan Andika", consumer: "INDIYANI WULANSUCI", contract: "1060120260707158", item: "MOTOR", sipok: 23300727 }
+            ],
+            ba3160: [
+                { collector: "Budi Satrio", consumer: "YULITA DEWI", contract: "1060120231005290", item: "MOTOR", sipok: 2830621 },
+                { collector: "Budi Satrio", consumer: "ARIS TOYIYANTO", contract: "1060120240705842", item: "MOBIL", sipok: 5648161 },
+                { collector: "Budi Satrio", consumer: "FRANCISKA AYU ROSALIANA", contract: "1060120250506310", item: "MOTOR", sipok: 15274558 },
+                { collector: "Budi Satrio", consumer: "TOTO SULISTIONO", contract: "1060120250706439", item: "MOTOR", sipok: 16276969 },
+                { collector: "Budi Satrio", consumer: "TRIMAN", contract: "1060120251006713", item: "MOBIL", sipok: 309580868 },
+                { collector: "Budi Satrio", consumer: "SLAMET HARIYADI", contract: "1060120251106723", item: "MOBIL", sipok: 70551691 },
+                { collector: "Budi Satrio", consumer: "ACHMAD SODIKIN", contract: "1060120251106730", item: "MOTOR", sipok: 18349602 },
+                { collector: "Budi Satrio", consumer: "SUPARMI", contract: "1060120251106741", item: "MOBIL", sipok: 139122238 },
+                { collector: "Budi Satrio", consumer: "HERMAN MASYHURI", contract: "1060120251206775", item: "MOBIL", sipok: 126876464 },
+                { collector: "Budi Satrio", consumer: "MOCH SHOLIKHIN", contract: "1060120251206788", item: "MOTOR", sipok: 17213293 },
+                { collector: "Budi Satrio", consumer: "AGUS PRAYITNO", contract: "1060120260106822", item: "MOBIL", sipok: 184812042 }
+            ]
+        };
+
+        // Application State
+        let appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        let activeMainTab = 'tab1';
+        let activeCollectorSubtab = 'OVERVIEW';
+        let chartInstances = {};
+
+        // Utility: Format Currency IDR
+        function formatIDR(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount || 0);
         }
 
-        function renderActiveSheet() {
-            dashboardContent.innerHTML = ''; // Clear current
+        // Utility: Toast Notifications
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200' : 'bg-rose-950/90 border-rose-500/50 text-rose-200';
+            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 ${bgColor}`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4"></i><span>${message}</span>`;
             
-            // Hapus grafik lama
-            if(charts.performaKPI) charts.performaKPI.destroy();
-            if(charts.portfolioDonut) charts.portfolioDonut.destroy();
+            container.appendChild(toast);
+            lucide.createIcons();
 
-            const sheetName = workbookData.activeSheet;
-            const data = workbookData.data[sheetName] || [];
-
-            if (data.length === 0) {
-                dashboardContent.innerHTML = `<div class="glass-panel p-10 text-center text-slate-400">Data kosong pada sheet ini.</div>`;
-                return;
-            }
-
-            // DETEKSI JENIS SHEET: Performa (Sheet 1) vs Portofolio (Sheet 2,3,4)
-            // Asumsi: Sheet performa memiliki kolom Total Insentif atau C1%
-            const sampleRow = data[0];
-            const keys = Object.keys(sampleRow).map(k => k.toLowerCase());
-            const isPerforma = keys.some(k => k.includes('insentif') || k.includes('c1'));
-
-            if (isPerforma) {
-                renderSheetPerforma(data);
-            } else {
-                renderSheetPortofolio(data);
-            }
-        }
-
-        // ==========================================
-        // ==========================================
-        function renderSheetPerforma(data) {
-            // Dapatkan daftar Collector unik
-            const collectorCol = getColName(data[0], ['nama collector', 'nama', 'collector', 'kolektor']);
-            if(!collectorCol) {
-                dashboardContent.innerHTML = `<div class="glass-panel p-6 text-red-400">Kolom Nama Collector tidak ditemukan.</div>`;
-                return;
-            }
-
-            const collectors = data.filter(r => r[collectorCol]).map(r => r[collectorCol]);
-            
-            if(!workbookData.performa.activeCollector || !collectors.includes(workbookData.performa.activeCollector)) {
-                workbookData.performa.activeCollector = collectors[0];
-            }
-
-            const activeCollData = data.find(r => r[collectorCol] === workbookData.performa.activeCollector);
-
-            // Mapping Data Kolom Fleksibel
-            const val = (keywords) => activeCollData[getColName(activeCollData, keywords)] || 0;
-            const str = (keywords) => activeCollData[getColName(activeCollData, keywords)] || '-';
-
-            const kpiData = {
-                w1Pct: val(['c1%', 'w1%']), insW1: val(['ins c1', 'ins w1']),
-                w2Pct: val(['c2%', 'w2%']), insW2: val(['ins c2', 'ins w2']),
-                w3Pct: val(['c3%', 'w3%']), insW3: val(['ins c3', 'ins w3']),
-                w4Pct: val(['c4%', 'w4%']), insW4: val(['ins c4', 'ins w4']),
-                tbMotor: val(['tb motor', 'motor']),
-                tbMobil: val(['tb mobil', 'mobil']),
-                btc: val(['btc', 'sr']),
-                totalInsentif: val(['total insentif', 'total']),
-                absen: val(['absen', 'total absen']),
-                botl: val(['botl', 'raport insentif']),
-                keterangan: str(['keterangan', 'status']),
-                nilai: str(['nilai', 'score']),
-                raport: str(['raport', 'grade']),
-                flow: val(['flow', 'flow kpi']),
-                balance: val(['balance']),
-                flowEver: val(['flow ever', 'ever'])
-            };
-
-            let html = `
-                <div class="fade-in space-y-6">
-                    <!-- Navigasi Nama Collector -->
-                    <div class="glass-panel p-2 flex gap-2 overflow-x-auto custom-scrollbar">
-                        ${collectors.map(c => `
-                            <button onclick="changeCollector('${c}')" 
-                                class="coll-tab px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap border border-slate-700 
-                                ${c === workbookData.performa.activeCollector ? 'active' : 'text-slate-400 hover:bg-slate-800'}">
-                                <i class="fa-solid fa-user-circle mr-1"></i> ${c}
-                            </button>
-                        `).join('')}
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <!-- Kiri: Total & Spesifik -->
-                        <div class="lg:col-span-4 space-y-6 flex flex-col">
-                            <!-- Card Total Insentif -->
-                            <div class="glass-panel p-6 relative overflow-hidden group border-l-4 border-blue-500">
-                                <div class="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/30 transition-all"></div>
-                                <div class="relative z-10">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Insentif Bulanan</div>
-                                        <div class="px-3 py-1 rounded-full text-[10px] font-bold ${kpiData.keterangan.toString().toLowerCase().includes('tidak') ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">
-                                            ${kpiData.keterangan}
-                                        </div>
-                                    </div>
-                                    <div class="text-3xl lg:text-4xl font-black text-white my-2">${formatRupiah(kpiData.totalInsentif)}</div>
-                                    
-                                    <div class="grid grid-cols-2 gap-4 mt-6">
-                                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                                            <div class="text-[10px] text-slate-400 mb-1">Nilai Akhir</div>
-                                            <div class="text-lg font-bold text-blue-400">${kpiData.nilai}</div>
-                                        </div>
-                                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                                            <div class="text-[10px] text-slate-400 mb-1">Raport</div>
-                                            <div class="text-lg font-bold text-violet-400">${kpiData.raport}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Card Rincian Spesifik -->
-                            <div class="glass-panel p-6 flex-1 flex flex-col justify-center">
-                                <h3 class="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2"><i class="fa-solid fa-list-check text-blue-400"></i> Rincian Insentif & Kehadiran</h3>
-                                <div class="space-y-3">
-                                    <div class="flex justify-between items-center p-3 bg-slate-800/40 rounded-lg border border-slate-700/50">
-                                        <span class="text-xs text-slate-400"><i class="fa-solid fa-motorcycle w-5 text-center"></i> TB Motor</span>
-                                        <span class="text-sm font-bold text-white">${formatRupiah(kpiData.tbMotor)}</span>
-                                    </div>
-                                    <div class="flex justify-between items-center p-3 bg-slate-800/40 rounded-lg border border-slate-700/50">
-                                        <span class="text-xs text-slate-400"><i class="fa-solid fa-car w-5 text-center"></i> TB Mobil</span>
-                                        <span class="text-sm font-bold text-white">${formatRupiah(kpiData.tbMobil)}</span>
-                                    </div>
-                                    <div class="flex justify-between items-center p-3 bg-slate-800/40 rounded-lg border border-slate-700/50">
-                                        <span class="text-xs text-slate-400"><i class="fa-brands fa-btc w-5 text-center"></i> BTC / SR</span>
-                                        <span class="text-sm font-bold text-white">${formatRupiah(kpiData.btc)}</span>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-3 mt-2">
-                                        <div class="p-3 bg-violet-900/20 rounded-lg border border-violet-500/20 text-center">
-                                            <div class="text-[10px] text-violet-300/70 uppercase">Total Absen</div>
-                                            <div class="text-lg font-bold text-violet-300">${kpiData.absen} <span class="text-[10px] font-normal">Hari</span></div>
-                                        </div>
-                                        <div class="p-3 bg-blue-900/20 rounded-lg border border-blue-500/20 text-center">
-                                            <div class="text-[10px] text-blue-300/70 uppercase">Ins. BOTL</div>
-                                            <div class="text-sm mt-1 font-bold text-blue-300">${formatRupiah(kpiData.botl)}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Kanan: Weekly & Chart -->
-                        <div class="lg:col-span-8 space-y-6">
-                            <!-- Weekly Grid -->
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                ${[1,2,3,4].map(w => `
-                                    <div class="glass-panel p-4 flex flex-col justify-between border-t-2 border-slate-600 hover:border-blue-400 transition-colors">
-                                        <div class="text-xs font-semibold text-slate-400 mb-2">Weekly ${w} (C${w}%)</div>
-                                        <div class="text-2xl font-black text-white">${formatPercent(kpiData[`w${w}Pct`])}</div>
-                                        <div class="text-xs font-medium text-emerald-400 mt-1">${formatRupiah(kpiData[`insW${w}`])}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-
-                            <!-- KPI Chart -->
-                            <div class="glass-panel p-6 h-[320px] flex flex-col">
-                                <h3 class="text-sm font-bold text-slate-200 mb-4">Tren KPI: Flow, Balance, Flow Ever (%)</h3>
-                                <div class="relative flex-1 w-full"><canvas id="performaChart"></canvas></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            dashboardContent.innerHTML = html;
-
-            // Render Chart Performa
             setTimeout(() => {
-                const ctx = document.getElementById('performaChart').getContext('2d');
-                charts.performaKPI = new Chart(ctx, {
-                    type: 'bar',
-                    plugins: [ChartDataLabels],
-                    data: {
-                        labels: ['FLOW', 'BALANCE', 'FLOW EVER'],
-                        datasets: [{
-                            label: 'Pencapaian KPI (%)',
-                            data: [(kpiData.flow*100), (kpiData.balance*100), (kpiData.flowEver*100)],
-                            backgroundColor: [
-                                'rgba(59, 130, 246, 0.8)', // Blue
-                                'rgba(139, 92, 246, 0.8)', // Violet
-                                'rgba(16, 185, 129, 0.8)'  // Emerald
-                            ],
-                            borderRadius: 6,
-                            borderWidth: 1,
-                            borderColor: 'rgba(255,255,255,0.1)'
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            datalabels: {
-                                color: '#fff',
-                                anchor: 'end', align: 'top',
-                                formatter: (val) => val.toFixed(1) + '%',
-                                font: { weight: 'bold' }
-                            }
-                        },
-                        scales: {
-                            y: { max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                            x: { grid: { display: false }, ticks: { color: '#cbd5e1' } }
-                        }
-                    }
-                });
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // STREAMING_CHUNK: Initializing Dashboard App on Window Load
+        window.onload = function() {
+            // Set current date string
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('currentDateStr').innerText = dateStr;
+
+            // Initialize Lucide icons
+            lucide.createIcons();
+
+            // Render all tabs & visualizations
+            renderDashboard();
+        };
+
+        function renderDashboard() {
+            renderTab1Subtabs();
+            renderTab1Content();
+            renderTab2Nood();
+            renderTab3Ba130();
+            renderTab4Ba3160();
+            lucide.createIcons();
+        }
+
+        // Main Tab Switcher
+        function switchMainTab(tabId) {
+            activeMainTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`tabContent-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`mainTab-${tabId}`);
+            activeBtn.classList.add('tab-active');
+            activeBtn.classList.remove('text-slate-400');
+
+            // Trigger chart updates to handle canvas sizing properly
+            setTimeout(() => {
+                if (tabId === 'tab2') renderTab2Nood();
+                if (tabId === 'tab3') renderTab3Ba130();
+                if (tabId === 'tab4') renderTab4Ba3160();
             }, 50);
         }
 
-        window.changeCollector = (name) => {
-            workbookData.performa.activeCollector = name;
-            renderActiveSheet();
+        // STREAMING_CHUNK: Rendering Sheet 1 Collector Incentive Subtabs and Details
+        function renderTab1Subtabs() {
+            const container = document.getElementById('collectorSubTabsContainer');
+            const collectors = appData.insentif.map(item => item.collector);
+
+            let html = `
+                <button onclick="switchCollectorSubtab('OVERVIEW')" class="subtab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border border-slate-700/60 ${activeCollectorSubtab === 'OVERVIEW' ? 'subtab-active' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'}">
+                    <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 inline mr-1"></i> Overview Team
+                </button>
+            `;
+
+            collectors.forEach(name => {
+                const isActive = activeCollectorSubtab === name;
+                html += `
+                    <button onclick="switchCollectorSubtab('${name}')" class="subtab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border border-slate-700/60 ${isActive ? 'subtab-active' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'}">
+                        ${name}
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
-        // ==========================================
-        // ==========================================
-        function renderSheetPortofolio(data) {
-            const cols = {
-                coll: getColName(data[0], ['nama collector', 'collector', 'kolektor']),
-                konsumen: getColName(data[0], ['nama konsumen', 'konsumen', 'nasabah', 'nama']),
-                kontrak: getColName(data[0], ['no kontrak', 'kontrak', 'nomor']),
-                tipe: getColName(data[0], ['tipe barang', 'tipe', 'barang', 'objek']),
-                sipok: getColName(data[0], ['sipok', 'sisa pokok', 'piutang', 'sisa'])
-            };
+        function switchCollectorSubtab(subtab) {
+            activeCollectorSubtab = subtab;
+            renderTab1Subtabs();
+            renderTab1Content();
+        }
 
-            // Get unique filter values
-            const filterColls = [...new Set(data.map(r => r[cols.coll]).filter(Boolean))].sort();
-            
-            // Build UI Skeleton
+        function renderTab1Content() {
+            const container = document.getElementById('collectorDetailView');
+
+            if (activeCollectorSubtab === 'OVERVIEW') {
+                renderTab1Overview(container);
+            } else {
+                renderTab1Individual(container, activeCollectorSubtab);
+            }
+        }
+
+        function renderTab1Overview(container) {
+            // Summary totals
+            const totalIns = appData.insentif.reduce((acc, curr) => acc + (curr.totalInsentif || 0), 0);
+            const totalRaportIns = appData.insentif.reduce((acc, curr) => acc + (curr.insentifRaport || 0), 0);
+            const avgNilai = (appData.insentif.reduce((acc, curr) => acc + (curr.nilai || 0), 0) / appData.insentif.length).toFixed(2);
+
             let html = `
-                <div class="fade-in space-y-6">
-                    <!-- Area Filter & Grafik -->
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        
-                        <!-- Left: Info & Filter -->
-                        <div class="lg:col-span-8 space-y-6">
-                            <!-- KPI Cards -->
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="glass-panel p-5 border-l-4 border-emerald-500">
-                                    <div class="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-widest">Total Kontrak (Sheet ini)</div>
-                                    <div class="text-3xl font-black text-white" id="port-total-kontrak">0</div>
-                                </div>
-                                <div class="glass-panel p-5 border-l-4 border-blue-500">
-                                    <div class="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-widest">Total Sipok</div>
-                                    <div class="text-3xl font-black text-blue-400" id="port-total-sipok">Rp 0</div>
-                                </div>
+                <div class="space-y-6">
+                    <!-- Overview KPI Top Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-400 font-medium">Total Insentif Perbulan (Tim)</p>
+                                <h3 class="text-2xl font-extrabold text-cyan-400 mt-1">${formatIDR(totalIns)}</h3>
+                                <p class="text-[11px] text-slate-500 mt-1">Gabungan Insentif C1 - C4</p>
                             </div>
-
-                            <!-- Filters -->
-                            <div class="glass-panel p-5">
-                                <h3 class="text-sm font-bold text-slate-200 mb-4"><i class="fa-solid fa-filter text-slate-400 mr-2"></i>Filter Data Penanganan</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1 uppercase font-semibold">Nama Collector</label>
-                                        <select id="filter-coll" class="w-full bg-slate-900 border border-slate-700 text-sm text-slate-200 rounded-lg p-2.5 focus:border-blue-500 focus:outline-none">
-                                            <option value="ALL">-- Semua Collector --</option>
-                                            ${filterColls.map(c => `<option value="${c}">${c}</option>`).join('')}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] text-slate-400 mb-1 uppercase font-semibold">Tipe Barang</label>
-                                        <select id="filter-tipe" class="w-full bg-slate-900 border border-slate-700 text-sm text-slate-200 rounded-lg p-2.5 focus:border-blue-500 focus:outline-none">
-                                            <option value="ALL">-- Semua Tipe --</option>
-                                            <option value="MOTOR">MOTOR</option>
-                                            <option value="MOBIL">MOBIL</option>
-                                        </select>
-                                    </div>
-                                </div>
+                            <div class="p-3.5 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                <i data-lucide="banknote" class="w-7 h-7"></i>
                             </div>
                         </div>
 
-                        <!-- Right: Donut Chart -->
-                        <div class="lg:col-span-4 glass-panel p-5 flex flex-col items-center justify-center">
-                            <h3 class="text-sm font-bold text-slate-200 w-full mb-2">Beban Penanganan Akun / Collector</h3>
-                            <div class="text-xs text-slate-400 w-full mb-4">Grafik proporsi jumlah kontrak per collector</div>
-                            <div class="relative w-full h-[220px]">
-                                <canvas id="portfolioChart"></canvas>
+                        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-400 font-medium">Total Insentif Raport (BOTL)</p>
+                                <h3 class="text-2xl font-extrabold text-indigo-400 mt-1">${formatIDR(totalRaportIns)}</h3>
+                                <p class="text-[11px] text-slate-500 mt-1">Bonus Absensi & Performance</p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                <i data-lucide="award" class="w-7 h-7"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-slate-400 font-medium">Rata-Rata Nilai Collector</p>
+                                <h3 class="text-2xl font-extrabold text-emerald-400 mt-1">${avgNilai} <span class="text-xs font-normal text-slate-400">/ 5.0</span></h3>
+                                <p class="text-[11px] text-emerald-400/80 mt-1">Status Tim: Performa Tinggi</p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <i data-lucide="star" class="w-7 h-7"></i>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Area Tabel -->
-                    <div class="glass-panel overflow-hidden">
-                        <div class="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
-                            <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-table-list text-blue-400 mr-2"></i>Rincian Konsumen & Kontrak</h3>
-                            <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400" id="table-row-count">Menampilkan 0 baris</span>
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
+                                <i data-lucide="bar-chart-3" class="w-4 h-4 text-cyan-400"></i>
+                                Perbandingan Insentif Per Collector
+                            </h4>
+                            <div class="h-64 relative">
+                                <canvas id="overviewIncentiveChart"></canvas>
+                            </div>
                         </div>
-                        <div class="overflow-x-auto overflow-y-auto max-h-[500px] custom-scrollbar">
-                            <table class="w-full text-left text-xs whitespace-nowrap">
-                                <thead class="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10 text-slate-400 uppercase font-semibold border-b border-slate-700">
+
+                        <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+                            <h4 class="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2">
+                                <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+                                Perbandingan KPI Rate (FLOW, BALANCE, FLOW EVER)
+                            </h4>
+                            <div class="h-64 relative">
+                                <canvas id="overviewKpiChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Table -->
+                    <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
+                        <h4 class="text-sm font-bold text-slate-200">Matriks Performa Seluruh Collector</h4>
+                        <div class="overflow-x-auto rounded-xl border border-slate-800">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-900 text-slate-400 border-b border-slate-800 font-semibold uppercase">
                                     <tr>
-                                        <th class="p-4">No</th>
-                                        <th class="p-4">Nama Collector</th>
-                                        <th class="p-4">Nama Konsumen</th>
-                                        <th class="p-4">No Kontrak</th>
-                                        <th class="p-4">Tipe Barang</th>
-                                        <th class="p-4 text-right">Sipok (Sisa Pokok)</th>
+                                        <th class="p-3">Collector</th>
+                                        <th class="p-3 text-center">Nilai</th>
+                                        <th class="p-3">Raport</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3 text-right">FLOW</th>
+                                        <th class="p-3 text-right">BALANCE</th>
+                                        <th class="p-3 text-right">FLOW EVER</th>
+                                        <th class="p-3 text-right">Ins. Bulanan</th>
+                                        <th class="p-3 text-right">Ins. Raport</th>
                                     </tr>
                                 </thead>
-                                <tbody id="portfolio-table-body" class="divide-y divide-slate-800">
-                                    <!-- Rows JS -->
+                                <tbody class="divide-y divide-slate-800 text-slate-300">
+                                    ${appData.insentif.map(item => `
+                                        <tr class="hover:bg-slate-800/40 transition-colors">
+                                            <td class="p-3 font-medium text-white">${item.collector}</td>
+                                            <td class="p-3 text-center font-bold text-cyan-400">${item.nilai}</td>
+                                            <td class="p-3">
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${getRaportBadgeClass(item.raport)}">
+                                                    ${item.raport}
+                                                </span>
+                                            </td>
+                                            <td class="p-3 text-center">
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.keterangan === 'DIBAYARKAN' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">
+                                                    ${item.keterangan}
+                                                </span>
+                                            </td>
+                                            <td class="p-3 text-right font-mono">${item.flow}%</td>
+                                            <td class="p-3 text-right font-mono">${item.balance}%</td>
+                                            <td class="p-3 text-right font-mono">${item.flowEver}%</td>
+                                            <td class="p-3 text-right font-semibold text-cyan-300">${formatIDR(item.totalInsentif)}</td>
+                                            <td class="p-3 text-right font-semibold text-indigo-300">${formatIDR(item.insentifRaport)}</td>
+                                        </tr>
+                                    `).join('')}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             `;
-            dashboardContent.innerHTML = html;
 
-            // Bind Events
-            document.getElementById('filter-coll').addEventListener('change', () => filterAndRenderPortfolio(data, cols));
-            document.getElementById('filter-tipe').addEventListener('change', () => filterAndRenderPortfolio(data, cols));
+            container.innerHTML = html;
 
-            // Initial Render
-            filterAndRenderPortfolio(data, cols);
+            // Render Overview Charts
+            setTimeout(() => {
+                renderOverviewCharts();
+            }, 50);
         }
 
-        function filterAndRenderPortfolio(allData, cols) {
-            const fColl = document.getElementById('filter-coll').value;
-            const fTipe = document.getElementById('filter-tipe').value;
+        function getRaportBadgeClass(raport) {
+            if (raport === 'EXCEPTIONAL') return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+            if (raport === 'EXCEED TARGET') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+            return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+        }
 
-            // 1. Filter Data
-            const filteredData = allData.filter(row => {
-                const rColl = row[cols.coll] || '';
-                const rTipe = (row[cols.tipe] || '').toString().toUpperCase();
-                
-                const matchColl = fColl === 'ALL' || rColl === fColl;
-                let matchTipe = true;
-                if(fTipe !== 'ALL') {
-                    matchTipe = rTipe.includes(fTipe); // Handle cases like "MOBIL BEKAS"
-                }
-                
-                return matchColl && matchTipe && rColl !== ''; // pastikan baris valid
-            });
+        function renderTab1Individual(container, collectorName) {
+            const data = appData.insentif.find(item => item.collector === collectorName) || appData.insentif[0];
 
-            // 2. Update KPI
-            const totalSipok = filteredData.reduce((acc, row) => acc + (parseFloat(row[cols.sipok]) || 0), 0);
-            document.getElementById('port-total-kontrak').innerText = filteredData.length;
-            document.getElementById('port-total-sipok').innerText = formatRupiah(totalSipok);
-            document.getElementById('table-row-count').innerText = `Menampilkan ${filteredData.length} baris`;
+            let html = `
+                <div class="space-y-6">
+                    <!-- Individual Collector Header Card -->
+                    <div class="glass-panel-glow p-6 rounded-2xl border border-cyan-500/30 relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+                            <div>
+                                <div class="flex items-center gap-3">
+                                    <div class="h-12 w-12 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg">
+                                        ${data.collector.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h2 class="text-2xl font-extrabold text-white">${data.collector}</h2>
+                                        <p class="text-xs text-slate-400">Detail Performa & Laporan Insentif Individu</p>
+                                    </div>
+                                </div>
+                            </div>
 
-            // 3. Update Table
-            const tbody = document.getElementById('portfolio-table-body');
-            tbody.innerHTML = filteredData.map((r, i) => {
-                const isMobil = (r[cols.tipe]||'').toString().toUpperCase().includes('MOBIL');
-                const badgeClass = isMobil ? 'bg-pink-500/20 text-pink-300 border-pink-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-                
-                return `
-                <tr class="hover:bg-slate-800/50 transition-colors">
-                    <td class="p-4 text-slate-500 font-medium">${i+1}</td>
-                    <td class="p-4 font-bold text-slate-200">${r[cols.coll] || '-'}</td>
-                    <td class="p-4 font-semibold text-white">${r[cols.konsumen] || '-'}</td>
-                    <td class="p-4 font-mono text-slate-400">${r[cols.kontrak] || '-'}</td>
-                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-bold border ${badgeClass}">${r[cols.tipe] || '-'}</span></td>
-                    <td class="p-4 text-right font-bold text-emerald-400">${formatRupiah(r[cols.sipok])}</td>
-                </tr>
-            `}).join('');
-            if(filteredData.length === 0) tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">Tidak ada data ditemukan sesuai filter.</td></tr>`;
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+                                    <p class="text-[10px] text-slate-400 font-medium">Nilai KPI</p>
+                                    <p class="text-lg font-black text-cyan-400">${data.nilai} <span class="text-xs text-slate-500 font-normal">/ 5.0</span></p>
+                                </div>
 
-            // 4. Update Chart (Hanya update data jika tidak ada filter Collector spesifik, agar chart tetap perbandingan global)
-            // Atau update berdasarkan filter (bebas). Kita buat selalu update berdasarkan filter tipe, tp agg per collector
-            
-            const chartDataToAgg = fColl === 'ALL' ? filteredData : allData.filter(row => {
-                const rTipe = (row[cols.tipe] || '').toString().toUpperCase();
-                return fTipe === 'ALL' || rTipe.includes(fTipe);
-            });
+                                <div class="px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+                                    <p class="text-[10px] text-slate-400 font-medium">Raport Collector</p>
+                                    <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-xs font-bold border ${getRaportBadgeClass(data.raport)}">
+                                        ${data.raport}
+                                    </span>
+                                </div>
 
-            const agg = {};
-            chartDataToAgg.forEach(r => {
-                const c = r[cols.coll];
-                if(c) agg[c] = (agg[c] || 0) + 1;
-            });
+                                <div class="px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+                                    <p class="text-[10px] text-slate-400 font-medium">Status Pembayaran</p>
+                                    <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-xs font-bold ${data.keterangan === 'DIBAYARKAN' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}">
+                                        ${data.keterangan}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            const sortedAgg = Object.entries(agg).sort((a,b) => b[1] - a[1]);
-            // Limit to top 5 for better viz, group rest to "Others"
-            let finalLabels = [];
-            let finalData = [];
-            if(sortedAgg.length > 6) {
-                let others = 0;
-                sortedAgg.forEach((item, idx) => {
-                    if(idx < 5) { finalLabels.push(item[0].substring(0,12)+'..'); finalData.push(item[1]); }
-                    else { others += item[1]; }
-                });
-                finalLabels.push('Lainnya'); finalData.push(others);
-            } else {
-                finalLabels = sortedAgg.map(i => i[0].substring(0,12)+'..');
-                finalData = sortedAgg.map(i => i[1]);
-            }
+                    <!-- Insentif & Absensi Summary Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                            <p class="text-xs text-slate-400 font-medium">Total Insentif Perbulan</p>
+                            <h3 class="text-xl font-bold text-cyan-400 mt-1">${formatIDR(data.totalInsentif)}</h3>
+                            <p class="text-[11px] text-slate-500 mt-1">Akumulasi C1 - C4</p>
+                        </div>
 
-            if(charts.portfolioDonut) charts.portfolioDonut.destroy();
-            
-            const ctx = document.getElementById('portfolioChart');
-            if(ctx) {
-                charts.portfolioDonut = new Chart(ctx.getContext('2d'), {
-                    type: 'doughnut',
-                    plugins: [ChartDataLabels],
+                        <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                            <p class="text-xs text-slate-400 font-medium">Insentif Raport (BOTL)</p>
+                            <h3 class="text-xl font-bold text-indigo-400 mt-1">${formatIDR(data.insentifRaport)}</h3>
+                            <p class="text-[11px] text-slate-500 mt-1">Raport ${data.raport}</p>
+                        </div>
+
+                        <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                            <p class="text-xs text-slate-400 font-medium">Total Absensi</p>
+                            <h3 class="text-xl font-bold text-emerald-400 mt-1">${data.absensi} <span class="text-xs text-slate-400 font-normal">Hari Kerja</span></h3>
+                            <p class="text-[11px] text-slate-500 mt-1">Kehadiran Bulanan</p>
+                        </div>
+
+                        <div class="glass-panel p-4 rounded-2xl border border-slate-800">
+                            <p class="text-xs text-slate-400 font-medium">Insentif Tambahan (TB/BTC)</p>
+                            <h3 class="text-xl font-bold text-amber-400 mt-1">${formatIDR((data.tbMotor || 0) + (data.tbMobil || 0) + (data.btcSr || 0))}</h3>
+                            <p class="text-[11px] text-slate-500 mt-1">TB Motor, Mobil & BTC/SR</p>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Incentives (C1 - C4) Section -->
+                    <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+                        <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-4 h-4 text-cyan-400"></i>
+                            Rincian Insentif Weekly (C1, C2, C3, C4)
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- C1 -->
+                            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-300">WEEKLY C1</span>
+                                    <span class="text-xs font-mono font-bold text-cyan-400">${data.c1Pct}%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-cyan-500 h-2 rounded-full" style="width: ${Math.min(data.c1Pct, 100)}%"></div>
+                                </div>
+                                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                                    <span class="text-[11px] text-slate-500">Nominal Ins C1:</span>
+                                    <span class="text-xs font-bold text-emerald-400">${formatIDR(data.c1Ins)}</span>
+                                </div>
+                            </div>
+
+                            <!-- C2 -->
+                            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-300">WEEKLY C2</span>
+                                    <span class="text-xs font-mono font-bold text-cyan-400">${data.c2Pct}%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-sky-500 h-2 rounded-full" style="width: ${Math.min(data.c2Pct, 100)}%"></div>
+                                </div>
+                                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                                    <span class="text-[11px] text-slate-500">Nominal Ins C2:</span>
+                                    <span class="text-xs font-bold text-emerald-400">${formatIDR(data.c2Ins)}</span>
+                                </div>
+                            </div>
+
+                            <!-- C3 -->
+                            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-300">WEEKLY C3</span>
+                                    <span class="text-xs font-mono font-bold text-cyan-400">${data.c3Pct}%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-indigo-500 h-2 rounded-full" style="width: ${Math.min(data.c3Pct, 100)}%"></div>
+                                </div>
+                                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                                    <span class="text-[11px] text-slate-500">Nominal Ins C3:</span>
+                                    <span class="text-xs font-bold text-emerald-400">${formatIDR(data.c3Ins)}</span>
+                                </div>
+                            </div>
+
+                            <!-- C4 -->
+                            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-300">WEEKLY C4</span>
+                                    <span class="text-xs font-mono font-bold text-cyan-400">${data.c4Pct}%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-purple-500 h-2 rounded-full" style="width: ${Math.min(data.c4Pct, 100)}%"></div>
+                                </div>
+                                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                                    <span class="text-[11px] text-slate-500">Nominal Ins C4:</span>
+                                    <span class="text-xs font-bold text-emerald-400">${formatIDR(data.c4Ins)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI Graphs & Additional Incentives Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- KPI Rate Visual Chart -->
+                        <div class="lg:col-span-2 glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col">
+                            <h4 class="text-sm font-bold text-slate-200 mb-2 flex items-center gap-2">
+                                <i data-lucide="gauge" class="w-4 h-4 text-cyan-400"></i>
+                                Grafik Persentase KPI (FLOW, BALANCE, FLOW EVER)
+                            </h4>
+                            <div class="flex-1 min-h-[220px] relative">
+                                <canvas id="individualKpiChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Insentif Tambahan Breakdown Table -->
+                        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col space-y-3">
+                            <h4 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                <i data-lucide="plus-circle" class="w-4 h-4 text-amber-400"></i>
+                                Insentif Tambahan
+                            </h4>
+                            <div class="space-y-2 text-xs">
+                                <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                                    <span class="text-slate-400">Insentif TB Motor</span>
+                                    <span class="font-bold text-slate-200">${formatIDR(data.tbMotor)}</span>
+                                </div>
+                                <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                                    <span class="text-slate-400">Insentif TB Mobil</span>
+                                    <span class="font-bold text-slate-200">${formatIDR(data.tbMobil)}</span>
+                                </div>
+                                <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+                                    <span class="text-slate-400">Insentif BTC / SR</span>
+                                    <span class="font-bold text-slate-200">${formatIDR(data.btcSr)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Render Individual Charts
+            setTimeout(() => {
+                renderIndividualChart(data);
+            }, 50);
+        }
+
+        // STREAMING_CHUNK: Chart Rendering Functions for Overview & Individual Tab 1
+        function renderOverviewCharts() {
+            // Incentive Comparison Chart
+            const ctx1 = document.getElementById('overviewIncentiveChart');
+            if (ctx1) {
+                if (chartInstances.overviewIncentive) chartInstances.overviewIncentive.destroy();
+                chartInstances.overviewIncentive = new Chart(ctx1, {
+                    type: 'bar',
                     data: {
-                        labels: finalLabels,
-                        datasets: [{
-                            data: finalData,
-                            backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#64748b'],
-                            borderColor: '#0f172a',
-                            borderWidth: 2,
-                            hoverOffset: 5
-                        }]
+                        labels: appData.insentif.map(d => d.collector),
+                        datasets: [
+                            {
+                                label: 'Total Insentif Bulanan',
+                                data: appData.insentif.map(d => d.totalInsentif),
+                                backgroundColor: 'rgba(6, 182, 212, 0.7)',
+                                borderColor: '#06b6d4',
+                                borderWidth: 1,
+                                borderRadius: 6
+                            },
+                            {
+                                label: 'Insentif Raport (BOTL)',
+                                data: appData.insentif.map(d => d.insentifRaport),
+                                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                                borderColor: '#6366f1',
+                                borderWidth: 1,
+                                borderRadius: 6
+                            }
+                        ]
                     },
                     options: {
-                        responsive: true, maintainAspectRatio: false, cutout: '65%',
+                        responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
-                            legend: { position: 'right', labels: { color: '#cbd5e1', usePointStyle: true, boxWidth: 6, font: {size: 10} } },
-                            datalabels: { color: '#fff', font: {weight: 'bold', size: 10}, formatter: (val) => val }
+                            legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+                            y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
+                        }
+                    }
+                });
+            }
+
+            // KPI Rates Chart
+            const ctx2 = document.getElementById('overviewKpiChart');
+            if (ctx2) {
+                if (chartInstances.overviewKpi) chartInstances.overviewKpi.destroy();
+                chartInstances.overviewKpi = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: appData.insentif.map(d => d.collector),
+                        datasets: [
+                            {
+                                label: 'FLOW %',
+                                data: appData.insentif.map(d => d.flow),
+                                backgroundColor: '#22d3ee'
+                            },
+                            {
+                                label: 'BALANCE %',
+                                data: appData.insentif.map(d => d.balance),
+                                backgroundColor: '#10b981'
+                            },
+                            {
+                                label: 'FLOW EVER %',
+                                data: appData.insentif.map(d => d.flowEver),
+                                backgroundColor: '#f59e0b'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+                            y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
                         }
                     }
                 });
             }
         }
 
-        // Mencari nama kolom sesungguhnya di array object JSON berdasarkan kata kunci
-        function getColName(rowObj, keywords) {
-            if(!rowObj) return null;
-            const keys = Object.keys(rowObj);
-            for(let key of keys) {
-                const lowerKey = key.toLowerCase();
-                for(let kw of keywords) {
-                    if(lowerKey.includes(kw.toLowerCase())) return key;
+        function renderIndividualChart(data) {
+            const ctx = document.getElementById('individualKpiChart');
+            if (!ctx) return;
+
+            if (chartInstances.individualKpi) chartInstances.individualKpi.destroy();
+            chartInstances.individualKpi = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['FLOW %', 'BALANCE %', 'FLOW EVER %'],
+                    datasets: [{
+                        label: 'Persentase Rate',
+                        data: [data.flow, data.balance, data.flowEver],
+                        backgroundColor: [
+                            'rgba(34, 211, 238, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ],
+                        borderColor: ['#22d3ee', '#10b981', '#f59e0b'],
+                        borderWidth: 1.5,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1', font: { size: 11, weight: 'bold' } }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: '#1e293b' } }
+                    }
+                }
+            });
+        }
+
+        // STREAMING_CHUNK: TAB 2 BA NOOD Rendering Logic and Donut Chart
+        function renderTab2Nood() {
+            // Populate Collector Filter dropdown if empty
+            const collectorSelect = document.getElementById('noodFilterCollector');
+            const collectors = [...new Set(appData.baNood.map(item => item.collector))];
+            
+            const currentVal = collectorSelect.value;
+            collectorSelect.innerHTML = '<option value="ALL">Semua Collector</option>' + 
+                collectors.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (collectors.includes(currentVal)) collectorSelect.value = currentVal;
+
+            filterNoodData();
+        }
+
+        function filterNoodData() {
+            const collectorFilter = document.getElementById('noodFilterCollector').value;
+            const itemFilter = document.getElementById('noodFilterItem').value;
+            const searchText = document.getElementById('noodSearchInput').value.toLowerCase();
+
+            let filtered = appData.baNood.filter(item => {
+                const matchCollector = collectorFilter === 'ALL' || item.collector === collectorFilter;
+                const matchItem = itemFilter === 'ALL' || item.item === itemFilter;
+                const matchSearch = item.consumer.toLowerCase().includes(searchText) || item.contract.toLowerCase().includes(searchText);
+                return matchCollector && matchItem && matchSearch;
+            });
+
+            // Update Metric Cards
+            document.getElementById('noodTotalContracts').innerText = filtered.length;
+            const totalSipok = filtered.reduce((acc, curr) => acc + (curr.sipok || 0), 0);
+            document.getElementById('noodTotalSipok').innerText = formatIDR(totalSipok);
+
+            const motorCount = filtered.filter(i => i.item === 'MOTOR').length;
+            const mobilCount = filtered.filter(i => i.item === 'MOBIL').length;
+            document.getElementById('noodMotorCount').innerText = `Motor: ${motorCount}`;
+            document.getElementById('noodMobilCount').innerText = `Mobil: ${mobilCount}`;
+
+            // Render Table
+            const tbody = document.getElementById('noodTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada data konsumen yang cocok.</td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map((item, idx) => `
+                    <tr class="hover:bg-slate-800/40 transition-colors">
+                        <td class="p-3 text-slate-500">${idx + 1}</td>
+                        <td class="p-3 font-medium text-slate-200">${item.collector}</td>
+                        <td class="p-3 font-semibold text-white">${item.consumer}</td>
+                        <td class="p-3 font-mono text-cyan-400">${item.contract}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.item === 'MOTOR' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'}">
+                                ${item.item}
+                            </span>
+                        </td>
+                        <td class="p-3 text-right font-semibold text-emerald-400">${formatIDR(item.sipok)}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Update Donut Chart based on full NOOD dataset per collector
+            renderNoodDonutChart();
+        }
+
+        function renderNoodDonutChart() {
+            const ctx = document.getElementById('noodDonutChart');
+            if (!ctx) return;
+
+            // Group count by collector
+            const counts = {};
+            appData.baNood.forEach(item => {
+                counts[item.collector] = (counts[item.collector] || 0) + 1;
+            });
+
+            const labels = Object.keys(counts);
+            const dataValues = Object.values(counts);
+
+            if (chartInstances.noodDonut) chartInstances.noodDonut.destroy();
+            chartInstances.noodDonut = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: ['#06b6d4', '#6366f1', '#10b981', '#f59e0b', '#ec4899'],
+                        borderColor: '#111827',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // STREAMING_CHUNK: TAB 3 BA 1_30 Rendering Logic and Donut Chart
+        function renderTab3Ba130() {
+            const collectorSelect = document.getElementById('ba130FilterCollector');
+            const collectors = [...new Set(appData.ba130.map(item => item.collector))];
+            
+            const currentVal = collectorSelect.value;
+            collectorSelect.innerHTML = '<option value="ALL">Semua Collector</option>' + 
+                collectors.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (collectors.includes(currentVal)) collectorSelect.value = currentVal;
+
+            filterBa130Data();
+        }
+
+        function filterBa130Data() {
+            const collectorFilter = document.getElementById('ba130FilterCollector').value;
+            const itemFilter = document.getElementById('ba130FilterItem').value;
+            const searchText = document.getElementById('ba130SearchInput').value.toLowerCase();
+
+            let filtered = appData.ba130.filter(item => {
+                const matchCollector = collectorFilter === 'ALL' || item.collector === collectorFilter;
+                const matchItem = itemFilter === 'ALL' || item.item === itemFilter;
+                const matchSearch = item.consumer.toLowerCase().includes(searchText) || item.contract.toLowerCase().includes(searchText);
+                return matchCollector && matchItem && matchSearch;
+            });
+
+            document.getElementById('ba130TotalContracts').innerText = filtered.length;
+            const totalSipok = filtered.reduce((acc, curr) => acc + (curr.sipok || 0), 0);
+            document.getElementById('ba130TotalSipok').innerText = formatIDR(totalSipok);
+
+            const motorCount = filtered.filter(i => i.item === 'MOTOR').length;
+            const mobilCount = filtered.filter(i => i.item === 'MOBIL').length;
+            document.getElementById('ba130MotorCount').innerText = `Motor: ${motorCount}`;
+            document.getElementById('ba130MobilCount').innerText = `Mobil: ${mobilCount}`;
+
+            const tbody = document.getElementById('ba130TableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada data konsumen yang cocok.</td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map((item, idx) => `
+                    <tr class="hover:bg-slate-800/40 transition-colors">
+                        <td class="p-3 text-slate-500">${idx + 1}</td>
+                        <td class="p-3 font-medium text-slate-200">${item.collector}</td>
+                        <td class="p-3 font-semibold text-white">${item.consumer}</td>
+                        <td class="p-3 font-mono text-amber-400">${item.contract}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.item === 'MOTOR' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'}">
+                                ${item.item}
+                            </span>
+                        </td>
+                        <td class="p-3 text-right font-semibold text-emerald-400">${formatIDR(item.sipok)}</td>
+                    </tr>
+                `).join('');
+            }
+
+            renderBa130DonutChart();
+        }
+
+        function renderBa130DonutChart() {
+            const ctx = document.getElementById('ba130DonutChart');
+            if (!ctx) return;
+
+            const counts = {};
+            appData.ba130.forEach(item => {
+                counts[item.collector] = (counts[item.collector] || 0) + 1;
+            });
+
+            if (chartInstances.ba130Donut) chartInstances.ba130Donut.destroy();
+            chartInstances.ba130Donut = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        data: Object.values(counts),
+                        backgroundColor: ['#f59e0b', '#06b6d4', '#10b981', '#6366f1'],
+                        borderColor: '#111827',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // STREAMING_CHUNK: TAB 4 BA 31_60 Rendering Logic and Donut Chart
+        function renderTab4Ba3160() {
+            const collectorSelect = document.getElementById('ba3160FilterCollector');
+            const collectors = [...new Set(appData.ba3160.map(item => item.collector))];
+            
+            const currentVal = collectorSelect.value;
+            collectorSelect.innerHTML = '<option value="ALL">Semua Collector</option>' + 
+                collectors.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (collectors.includes(currentVal)) collectorSelect.value = currentVal;
+
+            filterBa3160Data();
+        }
+
+        function filterBa3160Data() {
+            const collectorFilter = document.getElementById('ba3160FilterCollector').value;
+            const itemFilter = document.getElementById('ba3160FilterItem').value;
+            const searchText = document.getElementById('ba3160SearchInput').value.toLowerCase();
+
+            let filtered = appData.ba3160.filter(item => {
+                const matchCollector = collectorFilter === 'ALL' || item.collector === collectorFilter;
+                const matchItem = itemFilter === 'ALL' || item.item === itemFilter;
+                const matchSearch = item.consumer.toLowerCase().includes(searchText) || item.contract.toLowerCase().includes(searchText);
+                return matchCollector && matchItem && matchSearch;
+            });
+
+            document.getElementById('ba3160TotalContracts').innerText = filtered.length;
+            const totalSipok = filtered.reduce((acc, curr) => acc + (curr.sipok || 0), 0);
+            document.getElementById('ba3160TotalSipok').innerText = formatIDR(totalSipok);
+
+            const motorCount = filtered.filter(i => i.item === 'MOTOR').length;
+            const mobilCount = filtered.filter(i => i.item === 'MOBIL').length;
+            document.getElementById('ba3160MotorCount').innerText = `Motor: ${motorCount}`;
+            document.getElementById('ba3160MobilCount').innerText = `Mobil: ${mobilCount}`;
+
+            const tbody = document.getElementById('ba3160TableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Tidak ada data konsumen yang cocok.</td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map((item, idx) => `
+                    <tr class="hover:bg-slate-800/40 transition-colors">
+                        <td class="p-3 text-slate-500">${idx + 1}</td>
+                        <td class="p-3 font-medium text-slate-200">${item.collector}</td>
+                        <td class="p-3 font-semibold text-white">${item.consumer}</td>
+                        <td class="p-3 font-mono text-rose-400">${item.contract}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.item === 'MOTOR' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'}">
+                                ${item.item}
+                            </span>
+                        </td>
+                        <td class="p-3 text-right font-semibold text-emerald-400">${formatIDR(item.sipok)}</td>
+                    </tr>
+                `).join('');
+            }
+
+            renderBa3160DonutChart();
+        }
+
+        function renderBa3160DonutChart() {
+            const ctx = document.getElementById('ba3160DonutChart');
+            if (!ctx) return;
+
+            const counts = {};
+            appData.ba3160.forEach(item => {
+                counts[item.collector] = (counts[item.collector] || 0) + 1;
+            });
+
+            if (chartInstances.ba3160Donut) chartInstances.ba3160Donut.destroy();
+            chartInstances.ba3160Donut = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        data: Object.values(counts),
+                        backgroundColor: ['#f43f5e', '#a855f7', '#06b6d4', '#10b981'],
+                        borderColor: '#111827',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // STREAMING_CHUNK: Dynamic Excel Upload Handler & Sheet Parsing using SheetJS
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    const newAppData = {
+                        insentif: [],
+                        baNood: [],
+                        ba130: [],
+                        ba3160: []
+                    };
+
+                    // Process each sheet dynamically if present
+                    workbook.SheetNames.forEach(sheetName => {
+                        const worksheet = workbook.Sheets[sheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                        const nameUpper = sheetName.toUpperCase();
+                        if (nameUpper.includes('INSENTIF') || nameUpper.includes('PERFORMA')) {
+                            parseInsentifSheet(json, newAppData.insentif);
+                        } else if (nameUpper.includes('NOOD')) {
+                            parseConsumerSheet(json, newAppData.baNood);
+                        } else if (nameUpper.includes('1_30') || nameUpper.includes('1-30')) {
+                            parseConsumerSheet(json, newAppData.ba130);
+                        } else if (nameUpper.includes('31_60') || nameUpper.includes('31-60')) {
+                            parseConsumerSheet(json, newAppData.ba3160);
+                        }
+                    });
+
+                    // Fallback check: If parsed successfully, apply to global state
+                    if (newAppData.insentif.length > 0 || newAppData.baNood.length > 0) {
+                        if (newAppData.insentif.length > 0) appData.insentif = newAppData.insentif;
+                        if (newAppData.baNood.length > 0) appData.baNood = newAppData.baNood;
+                        if (newAppData.ba130.length > 0) appData.ba130 = newAppData.ba130;
+                        if (newAppData.ba3160.length > 0) appData.ba3160 = newAppData.ba3160;
+
+                        renderDashboard();
+                        showToast("Data Excel berhasil diunggah & diperbarui secara otomatis!");
+
+                        // Trigger celebratory confetti effect
+                        if (typeof confetti === 'function') {
+                            confetti({ particleCount: 80, spread: 60, origin: { y: 0.2 } });
+                        }
+                    } else {
+                        showToast("Sheet Excel tidak dapat dikenali. Menggunakan struktur default.", "error");
+                    }
+
+                } catch (err) {
+                    console.error("Error reading excel:", err);
+                    showToast("Gagal membaca file Excel. Pastikan format file .xlsx valid.", "error");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Helper: Generic Excel Parsing for Consumer Sheets
+        function parseConsumerSheet(rows, targetArray) {
+            if (!rows || rows.length < 2) return;
+            
+            // Find header row dynamically
+            let headerIdx = -1;
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                const rowStr = (rows[i] || []).join(' ').toUpperCase();
+                if (rowStr.includes('KONTRAK') || rowStr.includes('KONSUMEN') || rowStr.includes('COLLECTOR')) {
+                    headerIdx = i;
+                    break;
                 }
             }
-            return null;
-        }
 
-        // Data ini mensimulasikan struktur awal sebelum upload file asli
-        function initMockData() {
-            workbookData.sheets = ['Performa Collector', 'NOOD', 'Konsumen 1_30', 'Konsumen 31_60'];
-            
-            // Mock Performa (Sheet 1)
-            workbookData.data['Performa Collector'] = [
-                { 'Nama Collector': 'BUDI SANTOSO', 'C1%': 0.85, 'Ins C1': 500000, 'C2%': 0.90, 'Ins C2': 750000, 'C3%': 0.95, 'Ins C3': 1000000, 'C4%': 1.0, 'Ins C4': 1500000, 'TB Motor': 200000, 'TB Mobil': 500000, 'BTC': 100000, 'Total Insentif': 4550000, 'Total Absen': 26, 'BOTL': 500000, 'Keterangan': 'DIBAYARKAN', 'Nilai': 95, 'Raport': 'SANGAT BAIK', 'Flow': 0.98, 'Balance': 0.85, 'Flow Ever': 0.99 },
-                { 'Nama Collector': 'ANDI SAPUTRA', 'C1%': 0.40, 'Ins C1': 0, 'C2%': 0.50, 'Ins C2': 0, 'C3%': 0.60, 'Ins C3': 200000, 'C4%': 0.70, 'Ins C4': 300000, 'TB Motor': 100000, 'TB Mobil': 0, 'BTC': 0, 'Total Insentif': 600000, 'Total Absen': 24, 'BOTL': 0, 'Keterangan': 'TIDAK DIBAYARKAN (Di Bawah Target)', 'Nilai': 60, 'Raport': 'KURANG', 'Flow': 0.60, 'Balance': 0.55, 'Flow Ever': 0.70 }
-            ];
+            if (headerIdx === -1) headerIdx = 0;
+            const headers = (rows[headerIdx] || []).map(h => String(h || '').trim().toUpperCase());
 
-            // Mock Portofolio (Sheet 2, 3, 4 structure is identical)
-            const generateMockConsumers = (bucket) => {
-                let res = [];
-                const colls = ['BUDI SANTOSO', 'ANDI SAPUTRA', 'JOKO WIDODO', 'MEGAWATI'];
-                for(let i=0; i<30; i++) {
-                    res.push({
-                        'Nama Collector': colls[Math.floor(Math.random() * colls.length)],
-                        'Nama Konsumen': `KONSUMEN ${bucket} - ${i+1}`,
-                        'No Kontrak': `1060${Math.floor(1000000000 + Math.random() * 9000000000)}`,
-                        'Tipe Barang': Math.random() > 0.7 ? 'MOBIL BEKAS' : 'MOTOR BARU',
-                        'Sipok': Math.floor(3000000 + Math.random() * 20000000)
+            const colCollector = headers.findIndex(h => h.includes('COLLECTOR') || h.includes('NAMA COLLECTOR'));
+            const colConsumer = headers.findIndex(h => h.includes('KONSUMEN') || h.includes('NAMA KONSUMEN'));
+            const colContract = headers.findIndex(h => h.includes('KONTRAK') || h.includes('NO KONTRAK'));
+            const colItem = headers.findIndex(h => h.includes('BARANG') || h.includes('TIPE') || h.includes('JEIN'));
+            const colSipok = headers.findIndex(h => h.includes('SIPOK') || h.includes('SISA') || h.includes('OUTSTANDING'));
+
+            for (let i = headerIdx + 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || r.length === 0) continue;
+
+                const collector = colCollector !== -1 ? String(r[colCollector] || '').trim() : '';
+                const consumer = colConsumer !== -1 ? String(r[colConsumer] || '').trim() : '';
+                const contract = colContract !== -1 ? String(r[colContract] || '').trim() : '';
+                const item = colItem !== -1 ? String(r[colItem] || '').trim().toUpperCase() : 'MOTOR';
+                let sipok = colSipok !== -1 ? parseFloat(r[colSipok]) || 0 : 0;
+
+                if (collector && consumer && contract) {
+                    targetArray.push({
+                        collector,
+                        consumer,
+                        contract,
+                        item: item.includes('MOBIL') ? 'MOBIL' : 'MOTOR',
+                        sipok
                     });
                 }
-                return res;
-            };
-
-            workbookData.data['NOOD'] = generateMockConsumers('NOOD');
-            workbookData.data['Konsumen 1_30'] = generateMockConsumers('1_30');
-            workbookData.data['Konsumen 31_60'] = generateMockConsumers('31_60');
-
-            workbookData.activeSheet = workbookData.sheets[0];
-            
-            buildMainTabs();
-            renderActiveSheet();
+            }
         }
 
-        // Jalankan mock saat load pertama
-        window.addEventListener('DOMContentLoaded', initMockData);
+        // Helper: Parse Insentif Sheet
+        function parseInsentifSheet(rows, targetArray) {
+            if (!rows || rows.length < 2) return;
+            // Basic fallback parser if uploaded Excel has matching columns
+            for (let i = 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[0]) continue;
+                targetArray.push({
+                    collector: String(r[0] || '').trim(),
+                    nilai: parseFloat(r[1]) || 4.0,
+                    raport: String(r[2] || 'ON TARGET').toUpperCase(),
+                    keterangan: String(r[3] || 'DIBAYARKAN').toUpperCase(),
+                    flow: parseFloat(r[4]) || 0,
+                    balance: parseFloat(r[5]) || 0,
+                    flowEver: parseFloat(r[6]) || 0,
+                    c1Pct: parseFloat(r[7]) || 0, c1Ins: parseFloat(r[8]) || 0,
+                    c2Pct: parseFloat(r[9]) || 0, c2Ins: parseFloat(r[10]) || 0,
+                    c3Pct: parseFloat(r[11]) || 0, c3Ins: parseFloat(r[12]) || 0,
+                    c4Pct: parseFloat(r[13]) || 0, c4Ins: parseFloat(r[14]) || 0,
+                    tbMobil: parseFloat(r[15]) || 0,
+                    tbMotor: parseFloat(r[16]) || 0,
+                    btcSr: parseFloat(r[17]) || 0,
+                    totalInsentif: parseFloat(r[18]) || 0,
+                    absensi: parseInt(r[19]) || 26,
+                    insentifRaport: parseFloat(r[20]) || 0
+                });
+            }
+        }
 
+        // Reset Data
+        function resetToDefaultData() {
+            appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+            renderDashboard();
+            showToast("Data dikembalikan ke dataset default Workbook2.xlsx");
+        }
     </script>
 </body>
 </html>
+```eof
+
+Dashboard web monitoring performa collector dan penanganan konsumen ini telah selesai dibuat dan siap digunakan.
+
